@@ -96,24 +96,17 @@ $timeslot      = $orddd_class->orddd_get_order_timeslot( $order_id );
 																	<tbody>
 																		<tr> 
    																			<td style="padding:0px 0 6px 0;font-size:14px;font-weight:bold;font-family:verdana,arial,helvetica"> 
-  																				<br>Please select a rating for the seller based on these questions 
+  																				<br>Please select a rating for the product based on these questions 
 																			</td> 
   																		</tr>
 																		<tr>
 																			<td style="padding:2px 0 0 18px;font-size:15px;font-family:verdana,arial,helvetica">
-																			  Item arrived by 21 April 2017?
+																			  Item arrived by <?php echo $delivery_date;?>?
 																			</td>
 																		</tr>
 																		<tr>
 																			<td style="padding:2px 0 0 18px;font-size:15px;font-family:verdana,arial,helvetica">
-																			  Item as described by the seller?
-																			</td>
-																		</tr>
-																		<tr>
-																			<td style="padding:2px 0 0 18px;font-size:15px;font-family:verdana,arial,helvetica">
-																				Prompt and courteous service?
-																				<span style="margin-left:8px;color:gray;font-style:italic;font-size:11px"	>(If you 	contacted the seller)
-																				</span>
+																			  Item as described on the website?
 																			</td>
 																		</tr>
 																	</tbody>
@@ -164,8 +157,12 @@ $timeslot      = $orddd_class->orddd_get_order_timeslot( $order_id );
 															</table>
 	    												</td>
 	  												</tr>
-	  												<hr>
-	  												<?php } ?>
+		  												<?php if( count( $product_items ) > 1 ) {
+															?>
+															<hr>
+															<?php	
+		  												}
+	  												} ?>
 												</tbody>
 											</table>
 										</td>

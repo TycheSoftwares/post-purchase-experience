@@ -1,7 +1,7 @@
 <?php
-/*Plugin Name: Post Purchase Experience
+/*Plugin Name: Post Purchase Experience Addon
 Plugin URI: https://www.tychesoftwares.com/store/premium-plugins
-Description: 
+Description: This plugin allows you to send post purchase experience email to the customers on the next day of the delivery date. This plugin is an addon for <a href="https://www.tychesoftwares.com/store/premium-plugins/order-delivery-date-for-woocommerce-pro-21/" target="_blank">Order Delivery Date Pro for WooCommerce</a> plugin.
 Author: Tyche Softwares
 Version: 1.0
 Author URI: http://www.tychesoftwares.com/about
@@ -12,6 +12,7 @@ Contributor: Tyche Softwares, http://www.tychesoftwares.com/
 
 define( 'PPE_TEMPLATE_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) . '/templates/' );
 
+wp_clear_scheduled_hook( 'ppe_send_post_purchase_email' );
 if ( ! wp_next_scheduled( 'ppe_send_post_purchase_email' ) ) {
     wp_schedule_event( time(), 'daily_once', 'ppe_send_post_purchase_email' );    
 }
@@ -68,8 +69,8 @@ class post_purchase_experience {
 
 	public function ppe_add_cron_schedule( $schedules ) {
 		$schedules[ 'daily_once' ] = array(
-                'interval' => 10,  // one week in seconds
-                'display'  => __( 'Once in a Week', 'order-delivery-date' ),
+                'interval' => 86400,  // one week in seconds
+                'display'  => __( 'Once in a Day', 'order-delivery-date' ),
         );
         return $schedules;
 	}
