@@ -23,6 +23,9 @@ include_once( 'license.php' );
 class post_purchase_experience {
 	public function __construct() {
 
+		//Delete Plugin
+	    register_uninstall_hook( __FILE__, array( 'post_purchase_experience' , 'ppe_deactivate' ) );
+
 		//Check for Order Delivery Date Pro for WooCommerce
 		add_action( 'admin_init', array( &$this, 'ppe_check_if_plugin_active' ) );
 
@@ -41,6 +44,13 @@ class post_purchase_experience {
 		add_action( 'ppe_send_post_purchase_email', array( &$this, 'ppe_send_post_purchase_email' ) );
 
 		add_action( 'woocommerce_after_main_content', array( &$this, 'ppe_load_review_page' ));
+	}	
+
+	/**
+	 * Delete all the options from the database when plugin uninstalled
+	 */
+	public static function ppe_deactivate() {
+		delete_option( 'ppe_enable_post_experience_email' );
 	}
 
 	public function ppe_check_if_plugin_active() {
