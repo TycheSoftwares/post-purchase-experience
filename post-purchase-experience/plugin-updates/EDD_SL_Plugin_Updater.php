@@ -12,8 +12,8 @@
 class EDD_SL_Plugin_Updater {
 	private $api_url  = 'http://www.tychesoftwares.com/';
 	private $api_data = array();
-	private $name     = 'Pickup Date Addon for Order Delivery Date for WooCommerce Plugin';
-	private $slug     = 'pickup-date';
+	private $name     = 'Post Delivery Product Reviews Addon for Order Delivery Date for WooCommerce';
+	private $slug     = 'ppe-addon';
 
 	/**
 	 * Class constructor.

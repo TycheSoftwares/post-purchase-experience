@@ -1,7 +1,7 @@
 <?php
-/*Plugin Name: Post Purchase Experience Addon
+/*Plugin Name: Post Delivery Product Reviews Addon
 Plugin URI: https://www.tychesoftwares.com/store/premium-plugins
-Description: This plugin allows you to send post purchase experience email to the customers on the next day of the delivery date. This plugin is an addon for <a href="https://www.tychesoftwares.com/store/premium-plugins/order-delivery-date-for-woocommerce-pro-21/" target="_blank">Order Delivery Date Pro for WooCommerce</a> plugin.
+Description: This plugin allows you to send post delivery product reviews email to the customers on the next day of the delivery date. This plugin is an addon for <a href="https://www.tychesoftwares.com/store/premium-plugins/order-delivery-date-for-woocommerce-pro-21/" target="_blank">Order Delivery Date Pro for WooCommerce</a> & <a href="https://wordpress.org/plugins/order-delivery-date-for-woocommerce/" target="_blank">Order Delivery Date for WooCommerce Lite</a>plugin.
 Author: Tyche Softwares
 Version: 1.0
 Author URI: http://www.tychesoftwares.com/about
@@ -10,15 +10,38 @@ Contributor: Tyche Softwares, http://www.tychesoftwares.com/
 
 // Schedule an action if it's not already scheduled
 
+include_once( 'class-ppe-email-manager.php' );
+include_once( 'license.php' );
+
+if ( !class_exists( 'EDD_SL_Plugin_Updater' ) ) {
+    // load our custom updater if it doesn't already exist
+    include( dirname( __FILE__ ) . '/plugin-updates/EDD_SL_Plugin_Updater.php' );
+}
+
+// retrieve our license key from the DB
+$license_key = trim( get_option( 'ppe_sample_license_key' ) );
+// this is the URL our updater / license checker pings. This should be the URL of the site with EDD installed
+// IMPORTANT: change the name of this constant to something unique to prevent conflicts with other plugins using this system
+define( 'PPE_SL_STORE_URL', 'http://www.tychesoftwares.com/' ); 
+
+// the name of your product. This is the title of your product in EDD and should match the download title in EDD exactly
+// IMPORTANT: change the name of this constant to something unique to prevent conflicts with other plugins using this system
+define( 'PPE_SL_ITEM_NAME', 'Post Delivery Product Reviews Addon for Order Delivery Date for WooCommerce' ); 
+// setup the updater
+$edd_updater = new EDD_SL_Plugin_Updater( PPE_SL_STORE_URL, __FILE__, array(
+    'version' 	=> '6.8', 		// current version number
+    'license' 	=> $license_key, 	// license key (used get_option above to retrieve from DB)
+    'item_name' => PPE_SL_ITEM_NAME, 	// name of this plugin
+    'author' 	=> 'Ashok Rane'  // author of this plugin
+)
+);
+
 define( 'PPE_TEMPLATE_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) . '/templates/' );
 
 wp_clear_scheduled_hook( 'ppe_send_post_purchase_email' );
 if ( ! wp_next_scheduled( 'ppe_send_post_purchase_email' ) ) {
     wp_schedule_event( time(), 'daily_once', 'ppe_send_post_purchase_email' );    
 }
-
-include_once( 'class-ppe-email-manager.php' );
-include_once( 'license.php' );
 
 class post_purchase_experience {
 	public function __construct() {
@@ -31,6 +54,7 @@ class post_purchase_experience {
 
         //License
         add_action( 'orddd_add_submenu', array( &$this, 'ppe_addon_for_orddd_menu' ) );
+        add_action( 'orddd_lite_add_submenu', array( &$this, 'ppe_addon_for_orddd_lite_menu' ) );
         add_action( 'admin_init', array( 'ppe_license', 'ppe_register_option' ) );
         add_action( 'admin_init', array( 'ppe_license', 'ppe_deactivate_license' ) );
         add_action( 'admin_init', array( 'ppe_license', 'ppe_activate_license' ) );
@@ -50,11 +74,11 @@ class post_purchase_experience {
 	 * Delete all the options from the database when plugin uninstalled
 	 */
 	public static function ppe_deactivate() {
-		delete_option( 'ppe_enable_post_experience_email' );
+		delete_option( 'ppe_enable_post_delivery_email' );
 	}
 
 	public function ppe_check_if_plugin_active() {
-        if ( !is_plugin_active( 'order-delivery-date/order_delivery_date.php' ) ) {
+        if ( !is_plugin_active( 'order-delivery-date/order_delivery_date.php' ) && !class_exists('order_delivery_date_lite') ) {
             if ( is_plugin_active( plugin_basename( __FILE__ ) ) ) {
                 deactivate_plugins( plugin_basename( __FILE__ ) );
                 add_action( 'admin_notices', array( &$this, 'ppe_error_notice' ) );
@@ -67,14 +91,18 @@ class post_purchase_experience {
 
     public function ppe_error_notice() {
         $class = 'notice notice-error';
-        if( !is_plugin_active( 'order-delivery-date/order_delivery_date.php' ) ) {
-            $message = __( '<b>Post Purchase Experience Addon</b> requires <b>Order Delivery Date Pro for WooCommerce</b> plugin installed and activate.', 'order-delivery-date' );
+         if ( !is_plugin_active( 'order-delivery-date/order_delivery_date.php' ) && !class_exists('order_delivery_date_lite') ) {
+            $message = __( '<b>Post Delivery Product Reviews Addon</b> requires <b>Order Delivery Date Pro for WooCommerce</b> or <b>Order Delivery Date for WooCommerce Lite</b> plugin installed and activate.', 'order-delivery-date' );
         }
         printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
     }
 
     public function ppe_addon_for_orddd_menu() {
-        $page = add_submenu_page( 'order_delivery_date', __( 'Activate Post Purchase Experience License', 'order-delivery-date' ), __( 'Activate Post Purchase Experience License', 'order-delivery-date' ), 'manage_woocommerce', 'ppe_license_page', array( 'ppe_license', 'ppe_sample_license_page' ) );
+        $page = add_submenu_page( 'order_delivery_date', __( 'Activate Post Delivery Product Reviews Addon License', 'order-delivery-date' ), __( 'Activate Post Delivery Product Reviews Addon License', 'order-delivery-date' ), 'manage_woocommerce', 'ppe_license_page', array( 'ppe_license', 'ppe_sample_license_page' ) );
+    }
+
+    public function ppe_addon_for_orddd_lite_menu() {
+    	$page = add_submenu_page( 'order_delivery_date_lite', __( 'Activate Post Delivery Product Reviews Addon License', 'order-delivery-date' ), __( 'Activate Post Delivery Product Reviews Addon License', 'order_delivery_date_lite' ), 'manage_woocommerce', 'ppe_license_page', array( 'ppe_license', 'ppe_sample_license_page' ) );
     }
 
 	public function ppe_add_cron_schedule( $schedules ) {
@@ -117,41 +145,68 @@ class post_purchase_experience {
 	}
 
 	public function ppe_settings() {
-		add_settings_section(
-            'ppe_settings_section',		// ID used to identify this section and with which to register options
-            __( 'Post Purchase Experience Settings', 'ppe-woocommerce' ),		// Title to be displayed on the administration page
-            array( &$this, 'ppe_setting' ),		// Callback used to render the description of the section
-            'ppe_settings_page'				// Page on which to add this section of options
-        );
+		if( isset( $_GET[ 'page' ] ) && $_GET[ 'page' ] == 'order_delivery_date_lite' ) {
+	        add_settings_field(
+	            'ppe_enable_post_delivery_email',
+	            __( 'Send post delivery product reviews email:', 'ppe-woocommerce' ),
+	            array( &$this, 'ppe_enable_post_delivery_email_callback' ),
+	            'orddd_lite_date_settings_page',
+	            'orddd_lite_date_settings_section',
+	            array ( __( 'Set post delivery product reviews notification email to customers on next day of delivery.', 'order-delivery-date' ) )
+	        );
 
-        add_settings_field(
-            'ppe_enable_post_experience_email',
-            __( 'Send post purchase email:', 'ppe-woocommerce' ),
-            array( &$this, 'ppe_enable_post_experience_email_callback' ),
-            'ppe_settings_page',
-            'ppe_settings_section',
-            array ( __( 'Set post purchase experience notification email to customers on next day of delivery.', 'order-delivery-date' ) )
-        );
+	        	        
+		} else {
+			add_settings_section(
+            	'ppe_settings_section',		// ID used to identify this section and with which to register options
+            	__( 'Post Delivery Product reviews Settings', 'ppe-woocommerce' ),		// Title to be displayed on the administration page
+            	array( &$this, 'ppe_setting' ),		// Callback used to render the description of the section
+            	'ppe_settings_page'				// Page on which to add this section of options
+	        );
 
-        register_setting(
-        	'ppe_settings',
-        	'ppe_enable_post_experience_email'
+	        add_settings_field(
+	            'ppe_enable_post_delivery_email',
+	            __( 'Send post delivery product reviews email:', 'ppe-woocommerce' ),
+	            array( &$this, 'ppe_enable_post_delivery_email_callback' ),
+	            'ppe_settings_page',
+	            'ppe_settings_section',
+	            array ( __( 'Set post delivery product reviews notification email to customers on next day of delivery.', 'order-delivery-date' ) )
+	        );
+        }
+
+		register_setting(
+	        	'ppe_settings',
+	        	'ppe_enable_post_delivery_email',
+	        	array( &$this, 'ppe_checkbox_activate_timestamp' )
+			);
+
+		register_setting(
+        	'orddd_lite_date_settings',
+        	'ppe_enable_post_delivery_email',
+        	array( &$this, 'ppe_checkbox_activate_timestamp' )
 		);
+	}
+
+	public function ppe_checkbox_activate_timestamp( $input ) {
+		if( $input == 'on' ) {
+			update_option( 'ppe_checkbox_activate_timestamp', current_time( 'timestamp' ) );	
+		}
+		return $input;
 	}
 
 	public function ppe_setting() {
 
 	}
 
-	public function ppe_enable_post_experience_email_callback( $args ) {
-		$ppe_enable_post_experience_email = "";
-		if ( get_option( 'ppe_enable_post_experience_email' ) == 'on' ) {
-			$ppe_enable_post_experience_email = "checked";
+	public function ppe_enable_post_delivery_email_callback( $args ) {
+		$ppe_enable_post_delivery_email = "";
+		if ( get_option( 'ppe_enable_post_delivery_email' ) == 'on' ) {
+			$ppe_enable_post_delivery_email = "checked";
 		}
+		echo $ppe_enable_post_delivery_email;
+		echo '<input type="checkbox" name="ppe_enable_post_delivery_email" id="ppe_enable_post_delivery_email" class="day-checkbox" ' . $ppe_enable_post_delivery_email . '/>';
 		
-		echo '<input type="checkbox" name="ppe_enable_post_experience_email" id="ppe_enable_post_experience_email" class="day-checkbox" ' . $ppe_enable_post_experience_email . '/>';
-		
-		$html = '<label for="ppe_enable_post_experience_email"> ' . $args[0] . '</label>';
+		$html = '<label for="ppe_enable_post_delivery_email"> ' . $args[0] . '</label>';
 		echo $html;
 	}
 
