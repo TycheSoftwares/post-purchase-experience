@@ -8,11 +8,10 @@ class PPE_Email_Manager {
 	}
 
 	public static function ppe_send_email() {
-	    if( 'on' == get_option( 'ppe_enable_post_experience_email' ) ) {
+	    if( 'on' == get_option( 'ppe_enable_post_delivery_email' ) ) {
 	    	global $wpdb;
-
 	        $current_timestamp = current_time( 'timestamp' );
-
+	        $ppe_enabled_timestamp = get_option( 'ppe_checkbox_activate_timestamp', true );
 	        $site_title = get_option( 'blogname' );
 
 	        $ppe_query = "SELECT ID, post_status FROM `" . $wpdb->prefix . "posts` WHERE post_type = 'shop_order' AND post_status NOT IN ( 'wc-cancelled', 'wc-refunded', 'trash', 'wc-failed' ) AND ID IN ( SELECT post_id FROM `" . $wpdb->prefix . "postmeta` WHERE meta_key = '_orddd_timestamp' )";
@@ -26,8 +25,11 @@ class PPE_Email_Manager {
 		        $order = new WC_Order( $value->ID );
 		        $order_id = $value->ID;
 		        $delivery_timestamp = get_post_meta( $order_id, '_orddd_timestamp', true );
+		        if( $delivery_timestamp == '' ) {
+		        	$delivery_timestamp = get_post_meta( $order_id, '_orddd_lite_timestamp', true );
+		        }
 		        $next_delivery_timestamp = $delivery_timestamp + 86400;
-	            if( !in_array( $order_id, $email_sent_to_orders ) && $current_timestamp >= $next_delivery_timestamp ) {
+	            if( !in_array( $order_id, $email_sent_to_orders ) && $current_timestamp >= $next_delivery_timestamp && $delivery_timestamp > $ppe_enabled_timestamp ) {
 	            	$message = '';    
 	                //Subject
 	                $subject = PPE_Email_Manager::get_subject();
@@ -35,6 +37,7 @@ class PPE_Email_Manager {
 					$last_name     = $order->get_billing_last_name();
 	                $subject = str_replace( '{{customer_fullname}}', $first_name . " " . $last_name, $subject );
 	                $subject = str_replace( '{{website_title}}', $site_title, $subject );
+	                $subject = str_replace( '{{order_number}}', $order_id, $subject );
 
 	                //Recipient
 	                $recipient  = $order->get_billing_email();
@@ -56,7 +59,7 @@ class PPE_Email_Manager {
 	}
 
 	public static function get_subject() {
-		$subject = __( '{{customer_fullname}}, regarding your recent orders at {{website_title}}', 'ppe-woocommerce' );
+		$subject = __( '{{customer_fullname}}, regarding your recent order #{{order_number}} at {{website_title}}', 'ppe-woocommerce' );
 		return $subject;
 	}
 
