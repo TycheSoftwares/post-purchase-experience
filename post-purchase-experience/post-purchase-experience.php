@@ -203,7 +203,7 @@ class post_purchase_experience {
 		if ( get_option( 'ppe_enable_post_delivery_email' ) == 'on' ) {
 			$ppe_enable_post_delivery_email = "checked";
 		}
-		echo $ppe_enable_post_delivery_email;
+		
 		echo '<input type="checkbox" name="ppe_enable_post_delivery_email" id="ppe_enable_post_delivery_email" class="day-checkbox" ' . $ppe_enable_post_delivery_email . '/>';
 		
 		$html = '<label for="ppe_enable_post_delivery_email"> ' . $args[0] . '</label>';
