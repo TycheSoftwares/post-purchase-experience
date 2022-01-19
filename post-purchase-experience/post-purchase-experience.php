@@ -40,7 +40,7 @@ define( 'PPE_TEMPLATE_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) . 
 
 wp_clear_scheduled_hook( 'ppe_send_post_purchase_email' );
 if ( ! wp_next_scheduled( 'ppe_send_post_purchase_email' ) ) {
-    wp_schedule_event( time(), 'daily_once', 'ppe_send_post_purchase_email' );    
+    wp_schedule_event( time(), 'daily', 'ppe_send_post_purchase_email' );
 }
 
 class post_purchase_experience {
@@ -61,13 +61,13 @@ class post_purchase_experience {
 
 		//Cron to run script for deleting past date lockouts
 	    add_filter( 'cron_schedules', array( &$this, 'ppe_add_cron_schedule' ) );
-		add_action( 'orddd_general_settings_links', array( &$this, 'ppe_links' ) );	
-		add_action( 'admin_init', array( &$this, 'ppe_settings' ) );
+		add_action( 'orddd_addon_settings', array( &$this, 'ppe_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'ppe_my_enqueue_css' ) );
 
 		add_action( 'ppe_send_post_purchase_email', array( &$this, 'ppe_send_post_purchase_email' ) );
 
 		add_action( 'woocommerce_after_main_content', array( &$this, 'ppe_load_review_page' ));
+		add_filter( 'orddd_additional_settings_rest_api', array( &$this, 'orddd_add_settings_to_api' ) );
 	}	
 
 	/**
@@ -123,79 +123,21 @@ class post_purchase_experience {
 		}
 	}
 
-	public function ppe_links( $section ) {
-		$email_notifications_class = '';
-		if ( $section == 'ppe_settings' ) {
-	        $email_notifications_class = "current";
-	    }
-		?>
-		<li>
-	        | <a href="admin.php?page=order_delivery_date&action=general_settings&section=ppe_settings" class="<?php echo $email_notifications_class; ?>"><?php _e( 'Emails', 'order-delivery-date' );?> </a>
-	    </li>
-	    <?php
-		if( $section == 'ppe_settings' ) {
-	        print( '<div id="content">
-                <form method="post" action="options.php">' );
-                    settings_fields( "ppe_settings" );
-                    do_settings_sections( "ppe_settings_page" );
-                    submit_button ( __( 'Save Settings', 'ppe_woocommerce' ), 'primary', 'save', true );
-                print('</form>
-            </div>');
-        }	    
-	}
-
-	public function ppe_settings() {
-		if( isset( $_GET[ 'page' ] ) && $_GET[ 'page' ] == 'order_delivery_date_lite' ) {
-	        add_settings_field(
-	            'ppe_enable_post_delivery_email',
-	            __( 'Send post delivery product reviews email:', 'ppe-woocommerce' ),
-	            array( &$this, 'ppe_enable_post_delivery_email_callback' ),
-	            'orddd_lite_date_settings_page',
-	            'orddd_lite_date_settings_section',
-	            array ( __( 'Set post delivery product reviews notification email to customers on next day of delivery.', 'order-delivery-date' ) )
-	        );
-
-	        	        
-		} else {
-			add_settings_section(
-            	'ppe_settings_section',		// ID used to identify this section and with which to register options
-            	__( 'Post Delivery Product reviews Settings', 'ppe-woocommerce' ),		// Title to be displayed on the administration page
-            	array( &$this, 'ppe_setting' ),		// Callback used to render the description of the section
-            	'ppe_settings_page'				// Page on which to add this section of options
-	        );
-
-	        add_settings_field(
-	            'ppe_enable_post_delivery_email',
-	            __( 'Send post delivery product reviews email:', 'ppe-woocommerce' ),
-	            array( &$this, 'ppe_enable_post_delivery_email_callback' ),
-	            'ppe_settings_page',
-	            'ppe_settings_section',
-	            array ( __( 'Set post delivery product reviews notification email to customers on next day of delivery.', 'order-delivery-date' ) )
-	        );
-        }
-
-		register_setting(
-	        	'ppe_settings',
-	        	'ppe_enable_post_delivery_email',
-	        	array( &$this, 'ppe_checkbox_activate_timestamp' )
-			);
-
-		register_setting(
-        	'orddd_lite_date_settings',
-        	'ppe_enable_post_delivery_email',
-        	array( &$this, 'ppe_checkbox_activate_timestamp' )
+	public function ppe_settings( $settings ) {
+		$settings = array(
+			array(
+				'settings_id'	 => 'ppe_enable_post_delivery_email',
+				'settings_label' => __( 'Post Delivery Product Reviews', 'ppe-woocommerce' ),
+				'tooltip'		 => __( 'Send post delivery product reviews notification email to customers on next day of delivery.', 'order-delivery-date' ),
+			),
 		);
+		return $settings;
 	}
 
-	public function ppe_checkbox_activate_timestamp( $input ) {
-		if( $input == 'on' ) {
-			update_option( 'ppe_checkbox_activate_timestamp', current_time( 'timestamp' ) );	
-		}
-		return $input;
-	}
+	public static function orddd_add_settings_to_api( $settings ) {
+		$settings['ppe_enable_post_delivery_email']  = false !== get_option( 'ppe_enable_post_delivery_email' ) ? get_option( 'ppe_enable_post_delivery_email' ) : '';
 
-	public function ppe_setting() {
-
+		return $settings;
 	}
 
 	public function ppe_enable_post_delivery_email_callback( $args ) {
