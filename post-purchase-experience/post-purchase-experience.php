@@ -3,7 +3,7 @@
 Plugin URI: https://www.tychesoftwares.com/store/premium-plugins
 Description: This plugin allows you to send post delivery product reviews email to the customers on the next day of the delivery date. This plugin is an addon for <a href="https://www.tychesoftwares.com/store/premium-plugins/order-delivery-date-for-woocommerce-pro-21/" target="_blank">Order Delivery Date Pro for WooCommerce</a> & <a href="https://wordpress.org/plugins/order-delivery-date-for-woocommerce/" target="_blank">Order Delivery Date for WooCommerce Lite</a>plugin.
 Author: Tyche Softwares
-Version: 1.0
+Version: 1.1.0
 Author URI: http://www.tychesoftwares.com/about
 Contributor: Tyche Softwares, http://www.tychesoftwares.com/
 */
@@ -29,7 +29,7 @@ define( 'PPE_SL_STORE_URL', 'http://www.tychesoftwares.com/' );
 define( 'PPE_SL_ITEM_NAME', 'Post Delivery Product Reviews Addon for Order Delivery Date for WooCommerce' ); 
 // setup the updater
 $edd_updater = new EDD_SL_Plugin_Updater( PPE_SL_STORE_URL, __FILE__, array(
-    'version' 	=> '6.8', 		// current version number
+    'version' 	=> '1.1.0', 		// current version number
     'license' 	=> $license_key, 	// license key (used get_option above to retrieve from DB)
     'item_name' => PPE_SL_ITEM_NAME, 	// name of this plugin
     'author' 	=> 'Ashok Rane'  // author of this plugin
@@ -115,10 +115,10 @@ class post_purchase_experience {
 
 	public function ppe_my_enqueue_css( $hook ) {
 		if ( 'woocommerce_page_ppe_woocommerce' == $hook ) {
-			wp_enqueue_style( 'ppe_settings', plugins_url( '/css/ppe_settings.css', __FILE__ ) , '', '1.0', false );
+			wp_enqueue_style( 'ppe_settings', plugins_url( '/css/ppe_settings.css', __FILE__ ) , '', '1.1.0', false );
 			/*this has been done to make plugin compatible with WooCommerce Order Status & Actions Manager plugin*/
 	        wp_dequeue_script( 'wc-enhanced-select' );
-	        wp_register_script( 'select2', plugins_url() . '/woocommerce/assets/js/select2/select2.min.js', array( 'jquery', 'jquery-ui-widget', 'jquery-ui-core' ), '1.0' );
+	        wp_register_script( 'select2', plugins_url() . '/woocommerce/assets/js/select2/select2.min.js', array( 'jquery', 'jquery-ui-widget', 'jquery-ui-core' ), '1.1.0' );
 	        wp_enqueue_script( 'select2' );
 		}
 	}
